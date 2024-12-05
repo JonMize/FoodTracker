@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>30-Day Nutrition Stats</h1>
+
+        <!-- Line Chart for Calories -->
+        <h2>Daily Calories</h2>
+        <canvas id="caloriesChart"></canvas>
+
+        <!-- Line Chart for Proteins, Carbs, and Fats -->
+        <h2>Proteins, Carbs, and Fats</h2>
+        <canvas id="macrosChart"></canvas>
+
+        <a href="/" class="button">Back to Home</a>
+    </div>
+
+    <script>
+        async function fetchStats() {
+            try {
+                const response = await fetch('/get-stats');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Prepare data for the charts
+                const dates = data.map(item => item.date);
+                const dailyCalories = data.map(item => item.dailyCal);
+                const dailyProteins = data.map(item => item.dailyPro);
+                const dailyCarbs = data.map(item => item.dailyCarb);
+                const dailyFats = data.map(item => item.dailyFat);
+
+                // Create Calories Chart
+                const caloriesCtx = document.getElementById('caloriesChart').getContext('2d');
+                new Chart(caloriesCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Calories',
+                            data: dailyCalories,
+                            borderColor: 'red',
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Date' } },
+                            y: { title: { display: true, text: 'Calories' } }
+                        }
+                    }
+                });
+
+                // Create Macros Chart
+                const macrosCtx = document.getElementById('macrosChart').getContext('2d');
+                new Chart(macrosCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Proteins',
+                                data: dailyProteins,
+                                borderColor: 'blue',
+                                fill: false
+                            },
+                            {
+                                label: 'Carbs',
+                                data: dailyCarbs,
+                                borderColor: 'green',
+                                fill: false
+                            },
+                            {
+                                label: 'Fats',
+                                data: dailyFats,
+                                borderColor: 'orange',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Date' } },
+                            y: { title: { display: true, text: 'Grams' } }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                alert('Failed to load stats. Please try again later.');
+            }
+        }
+
+        // Fetch stats on page load
+        fetchStats();
+    </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Food Log</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Food Items</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Food Name</th>
+                    <th>Servings</th>
+                    <th>Calories</th>
+                    <th>Proteins</th>
+                    <th>Carbs</th>
+                    <th>Fats</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="food-log-body">
+                <!-- Rows will be dynamically inserted -->
+            </tbody>
+        </table>
+        <a href="/" class="button">Back to Home</a>
+    </div>
+
+    <script>
+        async function fetchFoodLog() {
+            try {
+                const response = await fetch('/get-food-log');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const tbody = document.getElementById('food-log-body');
+                tbody.innerHTML = '';
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.foodName}</td>
+                        <td>
+                            <input type="number" value="${item.servings}" min="1" id="servings-${item.foodId}">
+                        </td>
+                        <td>${item.calories}</td>
+                        <td>${item.protein}</td>
+                        <td>${item.carb}</td>
+                        <td>${item.fat}</td>
+                        <td>
+                            <button onclick="updateFood(${item.foodId})">Update</button>
+                            <button onclick="deleteFood(${item.foodId})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching food log:', error);
+                alert('Failed to load food log. Please try again later.');
+            }
+        }
+
+        async function updateFood(foodId) {
+            try {
+                const servings = document.getElementById(`servings-${foodId}`).value;
+                const response = await fetch('/update-food', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ foodId, servings }),
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                alert('Food updated successfully!');
+                fetchFoodLog();
+            } catch (error) {
+                console.error('Error updating food:', error);
+                alert('Failed to update food. Please try again later.');
+            }
+        }
+
+        async function deleteFood(foodId) {
+            try {
+                const response = await fetch('/delete-food', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ foodId }),
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                alert('Food deleted successfully!');
+                fetchFoodLog();
+            } catch (error) {
+                console.error('Error deleting food:', error);
+                alert('Failed to delete food. Please try again later.');
+            }
+        }
+
+        fetchFoodLog();
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FatSecret Food Search</title>
+    <link rel="stylesheet" href="static\styles.css">
+</head>
+<body>
+    <div class="container">
+        <div id="user-info" style="margin-bottom: 20px;">
+            <h2>Your Info</h2>
+            <p id="user-age">Loading age...</p>
+            <p id="user-weight">Loading weight...</p>
+            <p id="user-calgoal">Loading calorie goal...</p>
+        </div>
+        <h2>Food Search</h2>
+        <form id="search-form" method="POST" action="http://127.0.0.1:5000/search">
+            <label for="food-search">Enter food item:</label>
+            <input type="text" id="food-search" name="food" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <div id="selection" style="display: none;">
+            <h2>Selected Food</h2>
+            <form id="selection-form" method="POST" action="http://127.0.0.1:5000/add-to-db">
+                <p id="selected-food-name"></p>
+                <label for="servings">Number of Servings:</label>
+                <input type="number" id="servings" name="servings" min="1" required>
+                <input type="hidden" id="selected-food-id" name="food_id">
+                <button type="submit">Add to Database</button>
+            </form>
+        </div>
+
+        <div id="results">
+            <h2>Search Results</h2>
+            <ul id="food-list"></ul>
+        </div>   
+        <a href="/daily-totals-page" class="button">View Daily Totals</a>
+        <a href="/edit-page" class="button">Edit Foods</a>
+        <a href="/profile-page" class="button">Your Profile</a>
+        <a href="/stats-page" class="button">Last 30 Days</a>
+        <a href="/monthly-page" class="button">View Monthly Averages</a>
+    </div>
+</body>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const foodList = document.getElementById('food-list');
+        const selectionDiv = document.getElementById('selection');
+        const selectedFoodName = document.getElementById('selected-food-name');
+        const selectedFoodId = document.getElementById('selected-food-id');
+
+        document.getElementById('search-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const query = document.getElementById('food-search').value;
+            const response = await fetch('http://127.0.0.1:5000/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ food: query })
+            });
+            const results = await response.json();
+            foodList.innerHTML = '';
+            results.forEach((food) => {
+                const li = document.createElement('li');
+                li.textContent = food.name;
+                li.dataset.foodId = food.id;
+                li.addEventListener('click', () => {
+                    selectionDiv.style.display = 'block';
+                    selectedFoodName.textContent = food.name;
+                    selectedFoodId.value = food.id;
+                });
+                foodList.appendChild(li);
+            });
+        });
+    });
+    async function fetchUserInfo() {
+    try {
+        const response = await fetch('/get-user');
+        const user = await response.json();
+
+        if (user.error) {
+            throw new Error(user.error);
+        }
+
+        // Update the DOM with user information
+        document.getElementById('user-age').textContent = `Your age: ${user.age}`;
+        document.getElementById('user-weight').textContent = `Your weight: ${user.weight} lbs`;
+        document.getElementById('user-calgoal').textContent = `Your daily calorie goal: ${user.calgoal}`;
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        alert('Failed to load user info. Please try again.');
+    }
+}
+
+// Call the function on page load
+document.addEventListener('DOMContentLoaded', fetchUserInfo);
+
+</script>
+</html>

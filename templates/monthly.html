@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Averages</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Monthly Averages</h1>
+
+        <!-- Line Chart for Calories -->
+        <h2>Average Calories</h2>
+        <canvas id="caloriesChart"></canvas>
+
+        <!-- Line Chart for Proteins, Carbs, and Fats -->
+        <h2>Average Macronutrients (Proteins, Carbs, Fats)</h2>
+        <canvas id="macrosChart"></canvas>
+
+        <a href="/" class="button">Back to Home</a>
+    </div>
+
+    <script>
+        async function fetchMonthlyAverages() {
+            try {
+                const response = await fetch('/get-monthly-averages');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Map the data for charts
+                const months = data.map(item => item.month_name);
+                const avgCalories = data.map(item => item.avgCal || 0);
+                const avgProteins = data.map(item => item.avgPro || 0);
+                const avgCarbs = data.map(item => item.avgCarb || 0);
+                const avgFats = data.map(item => item.avgFat || 0);
+
+                // Render Calories Chart
+                const caloriesCtx = document.getElementById('caloriesChart').getContext('2d');
+                new Chart(caloriesCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Calories',
+                            data: avgCalories,
+                            borderColor: 'red',
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Month' } },
+                            y: { title: { display: true, text: 'Calories' } }
+                        }
+                    }
+                });
+
+                // Render Macronutrients Chart
+                const macrosCtx = document.getElementById('macrosChart').getContext('2d');
+                new Chart(macrosCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: 'Proteins',
+                                data: avgProteins,
+                                borderColor: 'blue',
+                                fill: false
+                            },
+                            {
+                                label: 'Carbs',
+                                data: avgCarbs,
+                                borderColor: 'green',
+                                fill: false
+                            },
+                            {
+                                label: 'Fats',
+                                data: avgFats,
+                                borderColor: 'orange',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Month' } },
+                            y: { title: { display: true, text: 'Grams' } }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching monthly averages:', error);
+                alert('Failed to load monthly averages. Please try again later.');
+            }
+        }
+
+        // Fetch data on page load
+        document.addEventListener('DOMContentLoaded', fetchMonthlyAverages);
+    </script>
+</body>
+</html>

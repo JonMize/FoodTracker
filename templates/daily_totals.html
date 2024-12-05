@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Totals</title>
+    <link rel="stylesheet" href="static\styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Daily Totals</h1>
+        <table>
+            <tr>
+                <th>Calories</th>
+                <td id="daily-cal">Loading...</td>
+            </tr>
+            <tr>
+                <th>Proteins</th>
+                <td id="daily-pro">Loading...</td>
+            </tr>
+            <tr>
+                <th>Carbs</th>
+                <td id="daily-carb">Loading...</td>
+            </tr>
+            <tr>
+                <th>Fats</th>
+                <td id="daily-fat">Loading...</td>
+            </tr>
+        </table>
+        <h2>Calorie Goal Progress</h2>
+        <p id="calorie-progress">Loading...</p>
+        <h2>Macronutrient Breakdown</h2>
+        <img src="http://127.0.0.1:5000/pie-chart" alt="Macronutrient Breakdown" width="400" height="400">
+
+        <a href="/"><button>Back to Home</button></a>
+    </div>
+
+    <script>
+        async function fetchDailyTotals() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/daily-totals');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Update the text fields
+                document.getElementById('daily-cal').textContent = data.dailyCal || 0;
+                document.getElementById('daily-pro').textContent = data.dailyPro || 0;
+                document.getElementById('daily-carb').textContent = data.dailyCarb || 0;
+                document.getElementById('daily-fat').textContent = data.dailyFat || 0;
+            } catch (error) {
+                console.error('Error fetching daily totals:', error);
+                alert('Failed to load daily totals. Please try again later.');
+            }
+        }
+
+        fetchDailyTotals();
+        
+
+    async function fetchCalorieProgress() {
+        try {
+            const response = await fetch('/daily-totals');
+            const data = await response.json();
+
+            const calgoalResponse = await fetch('/get-user');
+            const userData = await calgoalResponse.json();
+
+            const calgoal = userData.calgoal || 0;
+            const dailyCalories = data.dailyCal || 0;
+
+            let progressMessage = '';
+            if (calgoal > 0) {
+                const percentage = ((dailyCalories / calgoal) * 100).toFixed(1);
+                progressMessage = `You are at ${percentage}% of your daily calorie goal.`;
+            } else {
+                progressMessage = 'No calorie goal set.';
+            }
+
+            document.getElementById('calorie-progress').textContent = progressMessage;
+        } catch (error) {
+            console.error('Error fetching calorie progress:', error);
+            document.getElementById('calorie-progress').textContent = 'Failed to load calorie progress.';
+        }
+    }
+
+    fetchCalorieProgress();
+
+    </script>
+</body>
+</html>
